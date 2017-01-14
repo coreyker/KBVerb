@@ -13,5 +13,5 @@ $> make
 
 The build folder will contain the result of the build process. Note you may need to copy or simlink SDK header files to /usr/local/include (e.g., for Max/MSP and supercollider) to get this to work
 
-I have only tested this on OS X Yosemite
+I have only tested this on OS X Yosemite. You can find some precompiled binaries [here](https://github.com/coreyker/KBVerb/releases/latest)
 
