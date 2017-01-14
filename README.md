@@ -4,7 +4,7 @@ A Faust reverb, based on the architecture described [here](https://valhalladsp.c
 
 ### Where can I find more information
 
-See [blog.reverberate.ca](blog.reverberate.ca) for a more detailed description.
+See [blog.reverberate.ca](http://blog.reverberate.ca) for a more detailed description.
 
 ### Build instructions
 
