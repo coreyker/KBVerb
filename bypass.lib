@@ -1,0 +1,27 @@
+
+import("stdfaust.lib");
+
+// Simple bypass mecanism
+
+// Bypass an effect (fx:n->n). Once bypassed the effect is replaced by par(i,n,_). 
+// Bypassed effects can be chained.
+// Example: _,_ : bypass(checkbox("bypass reverb"), freeverb) : _,_
+
+block_on(b, fx) = par(i, inputs(fx), _*(1-b));
+block_off(b, fx) = par(i, inputs(fx), _*b);
+
+bypass_fx(b, fx) = par(i, inputs(fx), _) <: ((block_on(b, fx):fx), block_off(b, fx)) :> par(i, outputs(fx), _);
+
+// Bypass an effect (fx:n->n) with 's' samples crossfades. Once bypassed the  
+// effect is replaced by par(i,n,_). Bypassed effects can be chained.
+// Example: _,_ : bypass(checkbox("bypass reverb"), freeverb) : _,_
+bypass_fx_fade(b, s, fx) = par(i, inputs(fx), _) 
+					<: (par(i, inputs(fx), *(1-xb)) : fx : par(i, outputs(fx), *(1-xb)))
+					,  par(i, inputs(fx), *(xb))
+					:> par(i, outputs(fx), _)
+with {
+	xb = ramp(s, b);
+	ramp(n) = \(y,x).(if (y+1.0/n < x, y+1.0/n, if(y-1.0/n > x, y-1.0/n, x))) ~ _;
+	if (c,t,e) = select2(c,e,t);
+};
+
