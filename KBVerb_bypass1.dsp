@@ -1,3 +1,34 @@
+
+// Simple bypass mecanism
+
+// Bypass an effect (fx:n->n). Once bypassed the effect is replaced by par(i,n,_). 
+// Bypassed effects can be chained.
+// Example: _,_ : bypass(checkbox("bypass reverb"), freeverb) : _,_
+
+bypass_fx(b, fx) = par(i, inputs(fx), _) <: ((block_on(b, fx):fx), block_off(b, fx)) :> par(i, outputs(fx), _)
+with {
+	block_on(b, fx) = par(i, inputs(fx), _*(1-b));
+	block_off(b, fx) = par(i, inputs(fx), _*b);
+};
+
+// Bypass an effect (fx:n->n) with 's' samples crossfades. Once bypassed the  
+// effect is replaced by par(i,n,_). Bypassed effects can be chained.
+// Example: _,_ : bypass_fx_fade(checkbox("bypass reverb"), ma.SR/10, freeverb) : _,_
+
+bypass_fade(b, s, fx) = par(i, inputs(fx), _) 
+					<: (par(i, inputs(fx), *(1-xb)) : fx : par(i, outputs(fx), *(1-xb)))
+					,  par(i, inputs(fx), *(xb))
+					:> par(i, outputs(fx), _)
+with {
+	xb = ramp(s, b);
+	ramp(n) = \(y,x).(if (y+1.0/n < x, y+1.0/n, if(y-1.0/n > x, y-1.0/n, x))) ~ _;
+	if (c,t,e) = select2(c,e,t);
+};
+
+// Bypass an effect (fx:n->n) with crossfades expressed in seconds.
+
+bypass_fade_sec(b, d, fx) = bypass_fx_fade(b, ba.sec2samp(d), fx);
+
 declare name "KBVerb";
 declare author "Corey Kereliuk";
 declare copyright "Corey Kereliuk";
@@ -39,7 +70,7 @@ with {
 
 procMono(feedfwd_delays, feedback_delays, feedback_gain, x) = x : (+ : allpass_chain(feedfwd_delays, x)) ~ (_,x : + : section(feedback_delays) : *(feedback_gain)) :> _;
 
-process = si.bus(2) : mix(ma.PI/2) : *(0.5), *(0.5) : procLeft, procRight : si.bus(2)
+kBVerb = si.bus(2) : mix(ma.PI/2) : *(0.5), *(0.5) : procLeft, procRight : si.bus(2)
 with {	 
 
 	mix(theta) = si.bus(2) <: (*(c), *(-s), *(s), *(c)) : (+,+) : si.bus(2)
@@ -58,3 +89,5 @@ with {
 	feedback_delays_right = (primes(97), primes(99));
 	procRight = procMono(feedfwd_delays_right, feedback_delays_right, fb);
 };
+
+process = bypass_fade(checkbox("bypass"), ma.SR/10, kBVerb);
